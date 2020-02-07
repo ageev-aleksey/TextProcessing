@@ -1,0 +1,10 @@
+Parhi N., Tripathy A. K. On the behavior of solutions of a class third order difference equations // Journal of Difference Equations and Applications. — 2002. — V. 8, No. 5. — P. 415–426.;
+
+Schmeidel E. L., Janglajew K. R. Periodicity of solutions of nonhomogeneous linear difference equations // Advances in Difference Equations. — 2012. — 2012:195. URL:https://advancesindifferenceequations.springeropen.com/articles/10.1186/1687–1847–2012–195. doi:10.1186/1687–1847–2012–195. (дата обращения: 10.12.2016);
+
+Баранова А. Я., Шенмаер И. В., Нигматулин Р. М. Условная устойчивость разностного уравнения третьего порядка в критических случаях // Молодой ученый. — 2016. — № 25(129). — С. 113–122.;
+
+Козак А. Д., Новоселов О. Н. Асимптотическое поведение решений линейного однородного разностного уравнения второго порядка // Математические заметки. — 1999. — Т. 66, Вып. 2. — С. 211–215.;
+
+Нигматулин Р. М., Кипнис М. М. Свойства дискретных систем третьего порядка на границе их областей устойчивости // Фундаментальные исследования. — 2015. — № 9–1. — С. 39–43; URL: http://www.fundamental-research.ru/ru/article/view?id=38962 (дата обращения: 10.12.2016).
+
