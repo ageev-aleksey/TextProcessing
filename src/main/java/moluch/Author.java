@@ -48,7 +48,7 @@ public class Author {
                     break;
                 }
                 default: {
-                    throw new Exception("invalid format status and acdemic of Author. STATUS (acdemic and status) must be describe 1 field or 2 field");
+                    throw new Exception("invalid format status and academic of Author. STATUS (academic and status) must be describe 1 field or 2 field");
                 }
             }
         } else {
