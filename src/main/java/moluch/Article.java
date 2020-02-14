@@ -25,7 +25,7 @@ public class Article {
      * @return ArrayList<Author> - список авторов данной статьи
      * @see Author
      */
-    public ArrayList<Author> getAuthors() {
+    public List<Author> getAuthors() {
         return authors;
     }
 
@@ -58,7 +58,7 @@ public class Article {
      * Сайт молодой ученый генерирует автоматические теги по тексту статьи. Метод возвращает список автоматических тегов
      * @return ArrayList<String> - список автоматических тегов
      */
-    public ArrayList<String> getAutoTags() {
+    public List<String> getAutoTags() {
         return auto_tags;
     }
     /**
@@ -73,7 +73,7 @@ public class Article {
      * Метод возвращает список ключевых слов статьи (теги устанавливаемы авторами статьи)
      * @return ArrayList<String> - список ключевых слов (теги авторов)
      */
-    public ArrayList<String> getUsersTags() {
+    public List<String> getUsersTags() {
         return users_tags;
     }
 
@@ -208,13 +208,13 @@ public class Article {
         throw new Exception("invalid html pages structure");
     }
 
-    private ArrayList<Author> authors = new ArrayList<Author>();
+    private List<Author> authors = new ArrayList<Author>();
     private String text;
-    private ArrayList<String> auto_tags = new ArrayList<String>();
-    private ArrayList<String> users_tags = new ArrayList<String>();
+    private List<String> auto_tags = new ArrayList<String>();
+    private List<String> users_tags = new ArrayList<String>();
     private String category;
     private String annotation;
-    private ArrayList<String> references = new ArrayList<String>();
+    private List<String> references = new ArrayList<String>();
 }
 
 /**

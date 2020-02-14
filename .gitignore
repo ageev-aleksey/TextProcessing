@@ -2,3 +2,5 @@
 LIBS/
 libs-maven/
 target/
+
+sql/
