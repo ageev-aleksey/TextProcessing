@@ -19,23 +19,62 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Moluch {
-    public Moluch(Logger logger) {
+    public Moluch(Logger logger, ArticleSaver saver) {
         this.logger = logger;
+        this.art_saver = saver;
     }
-    public List<Article> access(String moluch_uri_archive)
+    public void access(String moluch_uri_archive)
             throws URISyntaxException, IOException, InterruptedException
     {
-        List<JournalNumberURI> numbers = get_references_of_journals(moluch_uri_archive);
+        HttpClient client = HttpClient.newBuilder().
+                followRedirects(HttpClient.Redirect.ALWAYS)
+                .build();
+        List<JournalNumberURI> numbers = get_references_of_journals(moluch_uri_archive, client);
         List<ArticleURI> articles = new LinkedList<>();
         for (JournalNumberURI n : numbers) {
             articles.addAll(get_references_of_articles(n.uri));
+            for (ArticleURI  art_uri : articles) {
+                HttpRequest request = HttpRequest.newBuilder()
+                        .GET()
+                        .uri(new URI(MOLUCH_JOURNAL_URL + art_uri.uri))
+                        .build();
+                HttpResponse<String> response = client.send(request,
+                        HttpResponse.BodyHandlers.ofString());
+                if(response.statusCode() != 200) {
+                    logger.warning("request of uri " + art_uri.uri +
+                            " returned code: " + String.valueOf(response.statusCode()));
+                    continue;
+                }
+                try {
+                    String body = response.body();
+                    Article art = Article.parse_html_moluch(body);
+                    List<Author> authors = parse_authors_through_page_article(response.body(), client);
+                    for(Author auth : authors) {
+                        art.addAuthor(auth);
+                    }
+                    art.setSaver(art_saver);
+                   if(!art.save()) {
+                       logger.warning("Error save article");
+                   }
+                } catch(Exception exp) {
+                    logger.warning("error of parsing html page of uri: " +
+                            art_uri.uri);
+                }
+
+
+            }
+            //вытаскивание ссылки на авторов
+
         }
-        return Collections.emptyList();
+
     }
-    public  List<JournalNumberURI> get_references_of_journals(String moluch_archive_url)
+
+
+
+
+    public  List<JournalNumberURI> get_references_of_journals(String moluch_archive_url, HttpClient client)
             throws URISyntaxException, IOException, InterruptedException
     {
-        HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(new URI(moluch_archive_url))
                 .GET()
@@ -80,6 +119,8 @@ public class Moluch {
 
     }
 
+
+
     public List<ArticleURI> get_references_of_articles(String uri_number_journal)
             throws URISyntaxException, IOException, InterruptedException
     {
@@ -117,7 +158,36 @@ public class Moluch {
         logger.warning(uri_number_journal +" response: " + String.valueOf(response.statusCode()));
         return Collections.emptyList();
     }
+
+    private List<Author> parse_authors_through_page_article(String article_page, HttpClient client) throws Exception {
+        Document doc = Jsoup.parse(article_page);
+        Elements authors_list = doc.getElementsByAttributeValue("itemprop", "author");
+        List<Author> result = new LinkedList<>();
+        List<String> urls = new LinkedList<>();
+        for(Element author : authors_list) {
+            urls.add(author.parent().attr("href"));
+        }
+
+        for(String u : urls) {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .GET()
+                    .uri(new URI(MOLUCH_JOURNAL_URL+u))
+                    .build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            if(response.statusCode() != 200) {
+                logger.warning("page of author: " + u + " is note available. Status: "
+                        + String.valueOf(response.statusCode()));
+            }
+            result.add(Author.parse_html_page(response.body()));
+        }
+        return result;
+    }
+
     private Logger logger;
+    private ArticleSaver art_saver;
+    private static final String MOLUCH_JOURNAL_URL = "https://moluch.ru";
+
+
 }
 
 class JournalNumberURI {

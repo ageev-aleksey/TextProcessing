@@ -1,6 +1,7 @@
 package moluch;
+import textworker.TableSaver;
 
-public interface ArticleSaver {
+public interface ArticleSaver extends TableSaver {
     boolean setTitle(String title);
     boolean addAuthor(Author author);
     boolean setText(String text);
@@ -9,4 +10,7 @@ public interface ArticleSaver {
     boolean addAutoTag(String tag);
     boolean setCategory(String category);
     boolean addReference(String ref);
+    boolean setNumber(int num);
+    boolean setYearNumber(int num);
+    boolean save();
 }

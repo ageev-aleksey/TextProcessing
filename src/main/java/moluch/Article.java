@@ -1,7 +1,10 @@
 package moluch;
 
 
+import java.lang.ref.Reference;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.checkerframework.checker.units.qual.A;
 import org.jetbrains.annotations.NotNull;
@@ -11,6 +14,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.jsoup.Jsoup;
+import textworker.FDict;
 
 
 /**
@@ -52,6 +56,10 @@ public class Article {
      */
     public void setText(String _text) {
         text = _text;
+    }
+
+    public void setTitle(String _title) {
+        title = _title;
     }
 
     /**
@@ -117,9 +125,59 @@ public class Article {
         annotation = ann;
     }
 
+    public void setNumber(int num) {
+        this.num = num;
+    }
+
+    public void setYearNum(int num) {
+        this.yearNum = num;
+    }
+
     public void addReference(String ref) {
         references.add(ref);
     }
+
+    /**
+     * Установка объекта, выполняющий операцию сохранения статьи в определнный формат
+     * @param saver - объетк,сохранающий статью в определенном им формате
+     * @return false - если пееданный указатель null, иначе true
+     */
+    public boolean setSaver(ArticleSaver saver) {
+        if(saver == null) {
+            return false;
+        }
+        this.saver = saver;
+        return true;
+    }
+
+    public boolean save() {
+        if(!saver.setTitle(title)) return false;
+        if(!saver.setText(text)) return false;
+        if(!saver.setAnnotation(annotation)) return false;
+        if(!saver.setCategory(category)) return false;
+        if(!saver.setNumber(num)) return false;
+        if(!saver.setYearNumber(yearNum)) return false;
+        for(Author author : authors) {
+            if(!saver.addAuthor(author)) return false;
+        }
+        for(String ref : references) {
+            if(!saver.addReference(ref)) return false;
+        }
+        for(String tag : users_tags) {
+            if(!saver.addTag(tag)) return false;
+        }
+        for(String tag : auto_tags) {
+            if(!saver.addTag(tag)) return false;
+        }
+        try{
+            FDict fd = FDict.from_text(text);
+            fd.setSaver(saver);
+            return fd.save();
+        } catch (Exception exp) {
+            return false;
+        }
+
+}
 
     /**
      * Функция для построения объеката Article из html страницы со статьей с сайта журнала "Молодой Ученый"
@@ -131,7 +189,21 @@ public class Article {
         Document doc = Jsoup.parse(page);
         Elements elements =  doc.getElementsByAttributeValue("itemprop", "articleBody");
         Article moluch = new Article();
-
+        moluch.category = doc.getElementsByAttributeValue("itemprop", "articleSection").text().trim().toLowerCase();
+        moluch.title = doc.getElementsByAttributeValue("itemprop", "headline").text().trim().toLowerCase();
+        String number_in_the_text = doc.getElementsByAttributeValue("itemprop", "issueNumber").text();
+        Matcher s = Pattern.compile("\\d+").matcher(number_in_the_text);
+        if (s.find()) {
+            moluch.num = Integer.parseInt(number_in_the_text.substring(s.start(), s.end()));
+            if (s.find()) {
+                moluch.yearNum = Integer.parseInt(number_in_the_text.substring(s.start(), s.end()));
+            } else {
+                throw new Exception("page don't containing number of journal");
+            }
+        }
+        else {
+            throw new Exception("page don't containing number of journal");
+        }
         if (elements != null) {
             Node node = (Node) elements.get(0);
             //-==ПАРСИНГ СПИСКА ЛИТЕРАТУРЫ==-
@@ -180,7 +252,7 @@ public class Article {
             HashMap<String, String[]> container = text_runner.run();
 
             Elements auto_tags = doc.getElementsByClass("art_base_keywords");
-            if (auto_tags != null) {
+            if ((auto_tags != null) && (auto_tags.size() > 0)) {
                 Element t_element = auto_tags.get(0);
                 if (t_element != null) {
                     String auto_tags_str = t_element.ownText();
@@ -208,6 +280,7 @@ public class Article {
         throw new Exception("invalid html pages structure");
     }
 
+    private String title;
     private List<Author> authors = new ArrayList<Author>();
     private String text;
     private List<String> auto_tags = new ArrayList<String>();
@@ -215,6 +288,9 @@ public class Article {
     private String category;
     private String annotation;
     private List<String> references = new ArrayList<String>();
+    private ArticleSaver saver = new DefaultArticleSaver();
+    private int num; // номер журнала за все время существования издания
+    private int yearNum;/// номер журнала в текущем году
 }
 
 /**
@@ -225,6 +301,68 @@ interface ArticlePartParser {
     public void parse(Node dom, Article art);
 }
 
+class DefaultArticleSaver implements ArticleSaver {
+
+    @Override
+    public boolean setTitle(String title) {
+        return false;
+    }
+
+    @Override
+    public boolean addAuthor(Author author) {
+        return false;
+    }
+
+    @Override
+    public boolean setText(String text) {
+        return false;
+    }
+
+    @Override
+    public boolean setAnnotation(String annotation) {
+        return false;
+    }
+
+    @Override
+    public boolean addTag(String tag) {
+        return false;
+    }
+
+    @Override
+    public boolean addAutoTag(String tag) {
+        return false;
+    }
+
+    @Override
+    public boolean setCategory(String category) {
+        return false;
+    }
+
+    @Override
+    public boolean addReference(String ref) {
+        return false;
+    }
+
+    @Override
+    public boolean setNumber(int num) {
+        return false;
+    }
+
+    @Override
+    public boolean setYearNumber(int num) {
+        return false;
+    }
+
+    @Override
+    public boolean addWord(Word word) {
+        return false;
+    }
+
+    @Override
+    public boolean save() {
+        return false;
+    }
+}
 
 /**
  * Класс извлекающий аннатацию из html страницы со статьей. Алгоритм работы основан на предположении того, что после

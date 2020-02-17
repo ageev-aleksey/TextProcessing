@@ -12,8 +12,8 @@ public interface TableSaver {
         public double frequency;
     }
     boolean addWord(Word word);
-    Word getNextWord();
-    boolean hasNext();
+    //Word getNextWord();
+    //boolean hasNext();
     boolean save();
-    boolean load();
+    //boolean load();
 }

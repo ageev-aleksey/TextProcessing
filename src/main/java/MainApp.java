@@ -1,12 +1,22 @@
 
+import moluch.Moluch;
 import textworker.FDict;
 import moluch.DbSaver;
 
 import java.sql.*;
+import java.util.logging.Logger;
+
 
 public class MainApp {
     public static void main(String[] args) throws Exception {
-        String db_uri = "jdbc:sqlite:./sql/db.sqlite3";
+
+        String db = "jdbc:sqlite:./sql/test2.sqlite3";
+        Connection conn = DriverManager.getConnection(db);
+        DbSaver db_saver  = new DbSaver(conn);
+        Moluch m = new Moluch(Logger.getLogger("test"), db_saver);
+        m.access("https://moluch.ru/archive/");
+
+       /*String db_uri = "jdbc:sqlite:./sql/db.sqlite3";
         Connection conn = DriverManager.getConnection(db_uri);
         try{
 
@@ -14,11 +24,11 @@ public class MainApp {
             PreparedStatement st = conn.prepareStatement("INSERT INTO article (article, annotation, bibliography) " +
                     "VALUES ('article', 'annotation', 'bibliography')", PreparedStatement.RETURN_GENERATED_KEYS);
             ResultSet rs = st.getGeneratedKeys();
-            System.out.println(rs.getInt(1));
+            System.out.println((rs.getObject(1).getClass().getName()));
             conn.commit();
         } catch(Exception exp) {
             conn.rollback();
-        }
+        }*/
 
       //  DbSaver.checkDbScheme(conn, "");
 

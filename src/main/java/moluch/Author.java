@@ -7,6 +7,7 @@ import java.io.ByteArrayInputStream;
 
 
 public class Author {
+    public int moluchId = -1;
     public String fname = "";
     public String lname = "";
     public String patronymic = "";
@@ -27,9 +28,14 @@ public class Author {
         if (fullname.length >= 2) {
             a.fname = fullname[0];
             a.lname = fullname[1];
-            if (fullname.length == 3) {
+            //если будет приставка "оглы" то добавлем ее в отчество
+            if(fullname.length >= 3) {
                 a.patronymic = fullname[2];
+                for(int i = 3; i < fullname.length; i++) {
+                    a.patronymic =  a.patronymic +  ' ' + fullname[i];
+                }
             }
+
         } else {
             throw new Exception("invalid format full name of author");
         }
@@ -42,13 +48,19 @@ public class Author {
                     a.status = academic_and_status[0];
                     break;
                 }
-                case 2: {
+              /*  case 2: {
                     a.academy = academic_and_status[0];
                     a.status = academic_and_status[1];
                     break;
-                }
+                }*/
                 default: {
-                    throw new Exception("invalid format status and academic of Author. STATUS (academic and status) must be describe 1 field or 2 field");
+                    a.academy = academic_and_status[0];
+                    StringBuilder sb = new StringBuilder();
+                    for(int i = 1; i < academic_and_status.length; i++) {
+                        sb.append(academic_and_status[i]);
+                        sb.append("\r\n");
+                    }
+                    a.status = sb.toString();
                 }
             }
         } else {

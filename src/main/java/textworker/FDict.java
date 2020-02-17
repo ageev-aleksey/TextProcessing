@@ -32,14 +32,25 @@ public class FDict {
     }
 
     public static FDict from_text(final String text) throws IOException {
-        String[] words = SimpleTokenizer.INSTANCE.tokenize(text);
+        String[] words = SimpleTokenizer.INSTANCE.tokenize(text.replaceAll("[^\\p{L}\\s]", " "));
         RussianLuceneMorphology morph = new RussianLuceneMorphology();
         for (int i = 0; i < words.length; i++) {
-            if (words[i].matches("[\\W\\d!#$%&\\\\'\\(\\)\\*\\+,-\\./:;<=>?@[\\\\]^_`{\\|}~]")) {
+            try {
+                words[i] = morph.getMorphInfo(words[i].toLowerCase()).get(0).split("\\|")[0];
+            } catch (Exception exp) {
+                System.err.println(exp.getMessage());
+            }
+
+            /*if (words[i].matches("[\\W\\d!#$%&\\\\'\\(\\)\\*\\+,-\\./:;<=>?@[\\\\]^_`{\\|}~]+")) {
                 words[i] = "";
             } else {
-                words[i] = morph.getMorphInfo(words[i].toLowerCase()).get(0).split("\\|")[0];
-            }
+                try{
+                    words[i] = morph.getMorphInfo(words[i].toLowerCase()).get(0).split("\\|")[0];
+                } catch (Exception exp) {
+                    System.err.println(exp.getMessage());
+                }
+
+            }*/
         }
         StringColumn word_col = StringColumn.create("word", words);
         Table tmp = word_col.countByCategory();
@@ -73,7 +84,7 @@ public class FDict {
         return saver.save();
     }
 
-    public boolean load() {
+    /*public boolean load() {
         if(saver.load()) {
             while(saver.hasNext()) {
                 TableSaver.Word w = saver.getNextWord();
@@ -84,7 +95,7 @@ public class FDict {
             return true;
         }
         return false;
-    }
+    }*/
    /* public Row get(int index) {
        // return table.
     }*/
@@ -104,22 +115,8 @@ class DefaultSaverTable implements TableSaver{
     }
 
     @Override
-    public Word getNextWord() {
-        return new Word();
-    }
-
-    @Override
-    public boolean hasNext() {
-        return false;
-    }
-
-    @Override
     public boolean save() {
         return false;
     }
 
-    @Override
-    public boolean load() {
-        return false;
-    }
 }

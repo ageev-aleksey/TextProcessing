@@ -38,7 +38,7 @@ public class XmlSaver implements TableSaver {
         return true;
     }
 
-    @Override
+   /* @Override
     public Word getNextWord() {
         Word word = new Word();
         if(!hasNext()) return word;
@@ -51,12 +51,12 @@ public class XmlSaver implements TableSaver {
             return new Word();
         }
         return word;
-    }
+    }*/
 
-    @Override
-    public boolean hasNext() {
+    //@Override
+   /* public boolean hasNext() {
         return pointer == null;
-    }
+    }*/
 
     @Override
     public boolean save()  {
@@ -73,7 +73,7 @@ public class XmlSaver implements TableSaver {
         return true;
     }
 
-    @Override
+   /* @Override
     public boolean load() {
         try {
             doc = DocumentBuilderFactory.newInstance()
@@ -83,7 +83,7 @@ public class XmlSaver implements TableSaver {
             return false;
         }
         return true;
-    }
+    }*/
 
     private String path;
     private Document doc;
