@@ -280,17 +280,17 @@ public class Article {
         throw new Exception("invalid html pages structure");
     }
 
-    private String title;
+    private String title = "";
     private List<Author> authors = new ArrayList<Author>();
-    private String text;
+    private String text = "";
     private List<String> auto_tags = new ArrayList<String>();
     private List<String> users_tags = new ArrayList<String>();
-    private String category;
-    private String annotation;
+    private String category = "";
+    private String annotation = "";
     private List<String> references = new ArrayList<String>();
     private ArticleSaver saver = new DefaultArticleSaver();
-    private int num; // номер журнала за все время существования издания
-    private int yearNum;/// номер журнала в текущем году
+    private int num = 0; // номер журнала за все время существования издания
+    private int yearNum = 0;/// номер журнала в текущем году
 }
 
 /**

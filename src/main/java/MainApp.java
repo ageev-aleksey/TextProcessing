@@ -1,20 +1,39 @@
 
-import moluch.Moluch;
+import moluch.PageStream;
+import moluch.SiteMoluchStream;
 import textworker.FDict;
 import moluch.DbSaver;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.logging.Logger;
 
 
 public class MainApp {
     public static void main(String[] args) throws Exception {
 
-        String db = "jdbc:sqlite:./sql/test2.sqlite3";
+        List<Integer> years = new ArrayList<>();
+        years.add(2019);
+        PageStream pg = new SiteMoluchStream(years, Collections.emptyList(), Logger.getLogger("Stream"));
+
+        for (PageStream it = pg; it.hasNext(); ) {
+            PageStream.ArticlePage page = it.next();
+            System.out.println("===============");
+            System.out.println(page.articleTitle);
+            System.out.println(page.journalMonth);
+            System.out.println(page.journalNumber);
+            System.out.println(page.journalYearNumber);
+
+        }
+
+
+       /* String db = "jdbc:sqlite:./sql/test2.sqlite3";
         Connection conn = DriverManager.getConnection(db);
         DbSaver db_saver  = new DbSaver(conn);
         Moluch m = new Moluch(Logger.getLogger("test"), db_saver);
-        m.access("https://moluch.ru/archive/");
+        m.access("https://moluch.ru/archive/");*/
 
        /*String db_uri = "jdbc:sqlite:./sql/db.sqlite3";
         Connection conn = DriverManager.getConnection(db_uri);

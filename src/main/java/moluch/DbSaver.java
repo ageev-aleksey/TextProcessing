@@ -8,6 +8,8 @@ import java.sql.*;
 import java.util.Formatter;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DbSaver implements ArticleSaver {
     public DbSaver(Connection dbConnection) throws Exception {
@@ -194,6 +196,7 @@ public class DbSaver implements ArticleSaver {
     @Override
     public boolean setText(String text) {
         if(text == null) {
+            logger.warning("article don't containing text");
             return false;
         }
         article = text;
@@ -204,6 +207,9 @@ public class DbSaver implements ArticleSaver {
     public boolean setAnnotation(String annotation) {
         if (annotation == null) {
             return false;
+        }
+        if(annotation.equals("")) {
+            logger.warning("article don't containing annotation");
         }
         this.annotation = annotation;
         return true;
@@ -318,6 +324,9 @@ public class DbSaver implements ArticleSaver {
     List<String> auto_key_words_id = new LinkedList<>();
     List<Integer> authors_id = new LinkedList<>();
     List<Word> words = new LinkedList<>();
+
+    Logger logger = Logger.getLogger("DbSaver");
+
     private static final Object ERROR_INSERTING_IN_DB = null;
     private static final int VALUE_NOT_SET = -1;
 }
