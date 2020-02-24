@@ -1,5 +1,6 @@
 package moluch;
 
+import org.jetbrains.annotations.NotNull;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -11,17 +12,14 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class SiteMoluchStream implements PageStream {
 
-    public SiteMoluchStream(List<Integer> journalYears, List<String> categories, Logger log) {
+    public SiteMoluchStream(List<Integer> journalYears, List<String> categories, Logger log) throws JournalPageException {
         this.logger = log;
         this.years = journalYears;
         this.categories = categories;
@@ -65,11 +63,11 @@ public class SiteMoluchStream implements PageStream {
             try {
                 articlesURI = get_references_of_articles(currentJournalURI.uri, client);
             } catch (URISyntaxException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                logger.warning("page (" + currentJournalURI.uri + ") containing invalid uris of articles page");
+                return null;
+            } catch (Exception e) {
+                logger.warning(e.getMessage());
+                return null;
             }
             aItr = articlesURI.iterator();
         }
@@ -185,7 +183,7 @@ public class SiteMoluchStream implements PageStream {
     }
 
     private List<ArticleURI> get_references_of_articles(String uri_number_journal, HttpClient client)
-            throws URISyntaxException, IOException, InterruptedException
+            throws URISyntaxException, IOException, InterruptedException, JournalPageException
     {
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -196,6 +194,30 @@ public class SiteMoluchStream implements PageStream {
         if (response.statusCode() == 200) {
             List<ArticleURI> result = new LinkedList<>();
             Document root = Jsoup.parse(response.body());
+
+            Elements category_list = root.getElementsByClass("j_menu");
+            HashMap<String, String> map = new HashMap<>();
+            if(category_list.size() > 0) {
+                category_list = category_list.get(0).getElementsByTag("a");
+                if(category_list.size() > 0) {
+                    Iterator<Element> cItr = category_list.iterator();
+                    Element elm = cItr.next();
+                    if(CLASS_HTML_CATEGORY.equals(elm.attr("data-block-code"))) {
+                        elm = cItr.next();
+                    }
+                    while(true) {
+                            String number = elm.attr("data-block-code");
+                            String value = elm.text();
+                            map.put(number, value);
+                        if(!cItr.hasNext()) {
+                            break;
+                        }
+                        elm = cItr.next();
+                    }
+                }
+            }
+
+
             Elements elements = root.getElementsByClass("j_article_h");
             for(Element el : elements) {
                 Elements href = el.children();
@@ -207,6 +229,8 @@ public class SiteMoluchStream implements PageStream {
                 ArticleURI au = new ArticleURI();
                 au.uri = href.get(0).attr("href");
                 au.title = href.get(0).text();
+                String key = href.get(0).parent().parent().attr("data-block");
+                au.category = map.get(key);
                 //au.category = TODO Доделать получение категории стать на этапе вытаскивания ссылок
                 if(au.uri.equals("#")) {
                     logger.warning("article: " + au.title + " in journal: " + uri_number_journal
@@ -218,7 +242,8 @@ public class SiteMoluchStream implements PageStream {
             return result;
         }
         logger.warning(uri_number_journal +" response: " + String.valueOf(response.statusCode()));
-        return Collections.emptyList();
+        throw new JournalPageException("Error get page with journal number (" + uri_number_journal
+                +"). Status Code: " + String.valueOf(response.statusCode()) );
     }
 
 
@@ -280,7 +305,7 @@ public class SiteMoluchStream implements PageStream {
     private List<JournalNumberURI> journalsUri;
     private Iterator<JournalNumberURI> jItr;
     private JournalNumberURI currentJournalURI;
-    private List<ArticleURI> articlesURI;
+    private List<ArticleURI>  articlesURI;
     private Iterator<ArticleURI> aItr;
     HttpClient client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build();
    // private List<JournalNumberURI> journalsUri;
@@ -288,6 +313,7 @@ public class SiteMoluchStream implements PageStream {
 
     private static final String MOLUCH_URL = "https://moluch.ru";
     private static final String MOLUCH_ARCHIVE_URL = "https://moluch.ru/archive/";
+    private static final String CLASS_HTML_CATEGORY = "all";
 
 }
 
@@ -319,12 +345,14 @@ class ArticleURI {
 }
 
 class JournalNumber {
-    List<ArticleURI> articles = null;
-    int journalNumber = 0;
-    int journalYearNumber = 0;
-    String journalMonth = "";
+    public List<ArticleURI> articles = null;
+    public int journalNumber = 0;
+    public int journalYearNumber = 0;
+    public String journalMonth = "";
 }
+
 
 interface CheckYear {
     boolean check(int year);
 }
+

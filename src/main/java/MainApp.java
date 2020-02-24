@@ -4,11 +4,19 @@ import moluch.SiteMoluchStream;
 import textworker.FDict;
 import moluch.DbSaver;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
+
+import java.nio.file.Path;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 
 public class MainApp {
@@ -17,15 +25,34 @@ public class MainApp {
         List<Integer> years = new ArrayList<>();
         years.add(2019);
         PageStream pg = new SiteMoluchStream(years, Collections.emptyList(), Logger.getLogger("Stream"));
-
+        int i = 1;
+        Path root_path = Paths.get("articles_html");
+        if(!Files.exists(root_path)) {
+            Files.createDirectory(root_path);
+        }
         for (PageStream it = pg; it.hasNext(); ) {
             PageStream.ArticlePage page = it.next();
-            System.out.println("===============");
-            System.out.println(page.articleTitle);
-            System.out.println(page.journalMonth);
-            System.out.println(page.journalNumber);
-            System.out.println(page.journalYearNumber);
+            Path category_path = Paths.get(root_path.resolve( page.articleCategory).toString());
+            if (!Files.exists(category_path)) {
+                Files.createDirectory(category_path);
+            }
+            Path article_path = Paths.get(String.valueOf(category_path.resolve(String.valueOf(i))));
+            Files.createDirectory(article_path);
+            Path file = Files.createFile(article_path.resolve("article.html"));
+            PrintWriter fwriter= new PrintWriter(new FileOutputStream(String.valueOf(file)));
+            fwriter.print(page.articleHtml);
+            fwriter.close();
+            int author_num = 1;
+            for (String author_html : page.authorsHtml) {
 
+                file = Files.createFile(article_path.resolve("author" + String.valueOf(author_num) + ".html"));
+                fwriter = new PrintWriter(new FileOutputStream(String.valueOf(file)));
+                fwriter.print(author_html);
+                fwriter.close();
+                author_num++;
+            }
+            i++;
+            System.out.println(i);
         }
 
 
