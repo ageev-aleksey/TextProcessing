@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class FDict {
-    public FDict() {
+    public FDict() throws IOException {
         table = Table.create();
         saver = new DefaultSaverTable();
     }
@@ -33,12 +33,13 @@ public class FDict {
 
     public static FDict from_text(final String text) throws IOException {
         String[] words = SimpleTokenizer.INSTANCE.tokenize(text.replaceAll("[^\\p{L}\\s]", " "));
-        RussianLuceneMorphology morph = new RussianLuceneMorphology();
+
         for (int i = 0; i < words.length; i++) {
             try {
                 words[i] = morph.getMorphInfo(words[i].toLowerCase()).get(0).split("\\|")[0];
             } catch (Exception exp) {
                 System.err.println(exp.getMessage());
+                words[i] = " ";
             }
 
             /*if (words[i].matches("[\\W\\d!#$%&\\\\'\\(\\)\\*\\+,-\\./:;<=>?@[\\\\]^_`{\\|}~]+")) {
@@ -105,6 +106,18 @@ public class FDict {
 
     private Table table = null;
     private TableSaver saver = null;
+    private static  RussianLuceneMorphology morph;
+
+    static {
+        try {
+            morph = new RussianLuceneMorphology();
+        } catch (IOException e) {
+            e.printStackTrace();
+
+        }
+    }
+
+    ;
 }
 
 class DefaultSaverTable implements TableSaver{

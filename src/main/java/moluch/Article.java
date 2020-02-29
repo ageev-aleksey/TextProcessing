@@ -3,6 +3,7 @@ package moluch;
 
 import java.lang.ref.Reference;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -167,10 +168,11 @@ public class Article {
             if(!saver.addTag(tag)) return false;
         }
         for(String tag : auto_tags) {
-            if(!saver.addTag(tag)) return false;
+            if(!saver.addAutoTag(tag)) return false;
         }
         try{
-            FDict fd = FDict.from_text(text);
+            FDict fd = new FDict();
+            fd = FDict.from_text(text);
             fd.setSaver(saver);
             return fd.save();
         } catch (Exception exp) {
@@ -204,7 +206,7 @@ public class Article {
         else {
             throw new Exception("page don't containing number of journal");
         }
-        if (elements != null) {
+        if ((elements != null) && (!elements.isEmpty())) {
             Node node = (Node) elements.get(0);
             //-==ПАРСИНГ СПИСКА ЛИТЕРАТУРЫ==-
             boolean list_found = false;
@@ -265,7 +267,7 @@ public class Article {
                     }
                 }
             }
-
+        try {
             String annotation = String.valueOf(ru_annotation_id) + "_annotation";
             if (container.containsKey(annotation)) {
                 moluch.setAnnotation(container.get(annotation)[0]);
@@ -274,7 +276,11 @@ public class Article {
                 }
             }
             moluch.setText(container.get(String.valueOf(text_id) + "_text")[0]);
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        } finally {
             return moluch;
+        }
 
         }
         throw new Exception("invalid html pages structure");
@@ -401,24 +407,31 @@ class AnnotationParser implements TextHtmlProcessor {
                 container.put("annotation", new String[] {annotation.toString().trim()});
                 //вытаскиваем ключевые слова
                 //Ключевые слова могут находиться как в html блоке с словом "Ключевые слова" так и в следующем html блоке
-                if (words[1].length() == 0) { // в этом случае ключевые слова назодятся в следующем блоке
-                    TextNode key_words = txt_getter.next();
-                    if (key_words != null) {
-                        String [] keywords = key_words.toString().toLowerCase().split(",");
-                        for(int i = 0; i < keywords.length; i++) {
-                            keywords[i] = keywords[i].trim();
+                try {
+
+
+                    if (words[1].length() == 0) { // в этом случае ключевые слова находятся в следующем блоке
+                        TextNode key_words = txt_getter.next();
+                        if (key_words != null) {
+                            String[] keywords = key_words.toString().toLowerCase().split(",");
+                            for (int i = 0; i < keywords.length; i++) {
+                                keywords[i] = keywords[i].trim();
+                            }
+                            container.put("user_key_words", keywords);
                         }
-                      container.put("user_key_words", keywords);
+                    } else { // в этом случае ключевые слова находятся в этом же блоке.
+                        //TODO очистка ключевых слов от небуквенных символов
+                        String[] keywords = words[1].toLowerCase().split("[,.]");
+                        for (int i = 0; i < keywords.length; i++) {
+                            keywords[i] = keywords[i].trim().replaceAll("[,.]", "");
+                        }
+                        container.put("user_key_words", keywords);
                     }
-                } else { // в этом случае ключевые слова находятся в этом же блоке.
-                   //TODO очистка ключевых слов от небуквенных символов
-                    String[] keywords = words[1].toLowerCase().split("[,.]");
-                    for(int i = 0; i < keywords.length; i++) {
-                        keywords[i] = keywords[i].trim();
-                    }
-                    container.put("user_key_words", keywords);
+                    return Result.SUCCESSFUL;
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    logger.warning("article containing no standard structure of key words!");
+                    return Result.FAILURE;
                 }
-                return Result.SUCCESSFUL;
             } else {
                 String trimmed = txt.toString().trim();
                 if (!trimmed.equals("")) {
@@ -431,6 +444,7 @@ class AnnotationParser implements TextHtmlProcessor {
     }
     private final static int MAX_LENGTH_ANNOTATION = 1500;
     private String annotation_word_detect;
+    private Logger logger = Logger.getLogger("Article.AnnotationParser");
 }
 
 class TextParser implements TextHtmlProcessor {

@@ -1,5 +1,6 @@
 package textworker;
 
+
 import javax.xml.transform.TransformerConfigurationException;
 
 public interface TableSaver {
@@ -11,9 +12,9 @@ public interface TableSaver {
         public String word;
         public double frequency;
     }
-    boolean addWord(Word word);
+    boolean addWord(Word word)  throws SaveException;;
     //Word getNextWord();
     //boolean hasNext();
-    boolean save();
+    boolean save() throws SaveException;
     //boolean load();
 }

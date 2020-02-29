@@ -1,16 +1,17 @@
 package moluch;
+import textworker.SaveException;
 import textworker.TableSaver;
 
 public interface ArticleSaver extends TableSaver {
-    boolean setTitle(String title);
-    boolean addAuthor(Author author);
-    boolean setText(String text);
-    boolean setAnnotation(String annotation);
-    boolean addTag(String tag);
-    boolean addAutoTag(String tag);
-    boolean setCategory(String category);
-    boolean addReference(String ref);
-    boolean setNumber(int num);
-    boolean setYearNumber(int num);
-    boolean save();
+    boolean setTitle(String title) throws SaveException;
+    boolean addAuthor(Author author)  throws SaveException;
+    boolean setText(String text)  throws SaveException;
+    boolean setAnnotation(String annotation)  throws SaveException;
+    boolean addTag(String tag)  throws SaveException;
+    boolean addAutoTag(String tag)  throws SaveException;
+    boolean setCategory(String category)  throws SaveException;
+    boolean addReference(String ref)  throws SaveException;
+    boolean setNumber(int num)  throws SaveException;
+    boolean setYearNumber(int num)  throws SaveException;
+    boolean save() throws SaveException;
 }

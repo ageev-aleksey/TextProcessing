@@ -1,13 +1,8 @@
 
-import moluch.PageStream;
-import moluch.SiteMoluchStream;
+import moluch.*;
 import textworker.FDict;
-import moluch.DbSaver;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.io.PrintWriter;
+import java.io.*;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,36 +19,70 @@ public class MainApp {
 
         List<Integer> years = new ArrayList<>();
         years.add(2019);
-        PageStream pg = new SiteMoluchStream(years, Collections.emptyList(), Logger.getLogger("Stream"));
-        int i = 1;
+        //PageStream pg = new SiteMoluchStream(years, Collections.emptyList(), Logger.getLogger("Stream"));
+        PageStream pg = new FilesMoluchStream(Paths.get("../articles_html"));
+
+        //Сохранение файлов в базу данных
+        String db = "jdbc:sqlite:./sql/test2.sqlite3";
+        Connection conn = DriverManager.getConnection(db);
+        DbSaver db_saver  = new DbSaver(conn);
+        int author_id = 1;
+        int article_number = 0;
+        for(PageStream it = pg; it.hasNext(); ) {
+            PageStream.ArticlePage page = it.next();
+            Article art = null;
+            try {
+                art = Article.parse_html_moluch(page.articleHtml);
+            } catch(Exception e) {
+                System.err.println(e.getMessage());
+                continue;
+            }
+            for(String author : page.authorsHtml) {
+                Author a = Author.parse_html_page(author);
+                a.moluchId = author_id;
+                art.addAuthor(a);
+                author_id++;
+            }
+            art.setSaver(db_saver);
+           if(!art.save()) {
+               System.err.println("Ошибка при сохранении статьи");
+           }
+            System.out.println(article_number);
+            article_number++;
+        }
+       /* int i = 1;
         Path root_path = Paths.get("articles_html");
         if(!Files.exists(root_path)) {
             Files.createDirectory(root_path);
         }
-        for (PageStream it = pg; it.hasNext(); ) {
-            PageStream.ArticlePage page = it.next();
-            Path category_path = Paths.get(root_path.resolve( page.articleCategory).toString());
-            if (!Files.exists(category_path)) {
-                Files.createDirectory(category_path);
-            }
-            Path article_path = Paths.get(String.valueOf(category_path.resolve(String.valueOf(i))));
-            Files.createDirectory(article_path);
-            Path file = Files.createFile(article_path.resolve("article.html"));
-            PrintWriter fwriter= new PrintWriter(new FileOutputStream(String.valueOf(file)));
-            fwriter.print(page.articleHtml);
-            fwriter.close();
-            int author_num = 1;
-            for (String author_html : page.authorsHtml) {
-
-                file = Files.createFile(article_path.resolve("author" + String.valueOf(author_num) + ".html"));
-                fwriter = new PrintWriter(new FileOutputStream(String.valueOf(file)));
-                fwriter.print(author_html);
+        try {
+            for (PageStream it = pg; it.hasNext(); ) {
+                PageStream.ArticlePage page = it.next();
+                Path category_path = Paths.get(root_path.resolve(page.articleCategory).toString());
+                if (!Files.exists(category_path)) {
+                    Files.createDirectory(category_path);
+                }
+                Path article_path = Paths.get(String.valueOf(category_path.resolve(String.valueOf(i))));
+                Files.createDirectory(article_path);
+                Path file = Files.createFile(article_path.resolve("article.html"));
+                PrintWriter fwriter = new PrintWriter(new FileOutputStream(String.valueOf(file)));
+                fwriter.print(page.articleHtml);
                 fwriter.close();
-                author_num++;
+                int author_num = 1;
+                for (String author_html : page.authorsHtml) {
+
+                    file = Files.createFile(article_path.resolve("author" + String.valueOf(author_num) + ".html"));
+                    fwriter = new PrintWriter(new FileOutputStream(String.valueOf(file)));
+                    fwriter.print(author_html);
+                    fwriter.close();
+                    author_num++;
+                }
+                i++;
+                System.out.println(i);
             }
-            i++;
-            System.out.println(i);
-        }
+        } catch(IOException e) {
+            System.err.println(e.getMessage());
+        }*/
 
 
        /* String db = "jdbc:sqlite:./sql/test2.sqlite3";

@@ -12,10 +12,15 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
+import java.util.logging.Logger;
 
 
 public class XmlSaver implements TableSaver {
     public XmlSaver(String path) throws ParserConfigurationException {
+        this(path, Logger.getLogger("TableSaver.XmlSaver"));
+    }
+    public XmlSaver(String path, Logger log) throws ParserConfigurationException {
+        this.logger = log;
         this.path = path;
         doc = DocumentBuilderFactory.newInstance()
                 .newDocumentBuilder().newDocument();
@@ -24,7 +29,7 @@ public class XmlSaver implements TableSaver {
         pointer = null;
     }
     @Override
-    public boolean addWord(Word word) {
+    public boolean addWord(Word word)  throws SaveException {
         try{
             Element root = doc.getDocumentElement();
             pointer = doc.createElement("word");
@@ -33,7 +38,8 @@ public class XmlSaver implements TableSaver {
             root.appendChild(pointer);
         }
         catch (Exception exp) {
-            return false;
+            logger.warning(exp.getMessage());
+            throw new SaveException(exp.getMessage());
         }
         return true;
     }
@@ -59,7 +65,7 @@ public class XmlSaver implements TableSaver {
     }*/
 
     @Override
-    public boolean save()  {
+    public boolean save() throws SaveException {
         try {
             DOMSource source = new DOMSource(doc);
             StreamResult file = new StreamResult(new File(path));
@@ -68,7 +74,8 @@ public class XmlSaver implements TableSaver {
                     .transform(source, file);
         }
         catch(Exception exp) {
-            return false;
+            logger.warning(exp.getMessage());
+            throw new SaveException(exp.getMessage());
         }
         return true;
     }
@@ -88,4 +95,5 @@ public class XmlSaver implements TableSaver {
     private String path;
     private Document doc;
     private Element pointer;
+    private Logger logger;
 }

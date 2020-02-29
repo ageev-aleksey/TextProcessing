@@ -1,6 +1,7 @@
 package moluch;
 
 import org.jetbrains.annotations.NotNull;
+import textworker.SaveException;
 import textworker.TableSaver;
 
 import javax.sql.RowSet;
@@ -44,7 +45,7 @@ public class DbSaver implements ArticleSaver {
 
 
     @Override
-    public boolean addWord(Word word) {
+    public boolean addWord(Word word) throws SaveException {
         if(word == null) {
             return false;
         }
@@ -57,7 +58,7 @@ public class DbSaver implements ArticleSaver {
     }
 
     @Override
-    public boolean save() {
+    public boolean save() throws SaveException {
         if(title == null || article == null || annotation == null || authors_id.size() == 0 ||
         reference.length() == 0 || num == VALUE_NOT_SET || num_year == VALUE_NOT_SET) {
             return false;
@@ -87,13 +88,13 @@ public class DbSaver implements ArticleSaver {
                 return false;
             }
             for(Integer author : authors_id) {
-                st = db.prepareStatement("INSERT INTO author_articel (id_author, id_article)" +
-                        "VALUES ( ?, ? ) ");
-                st.setInt(1, author);
-                st.setInt(2, art_id);
-                if(st.executeUpdate() != 1) {
-                    return false;
-                }
+                    st = db.prepareStatement("INSERT INTO author_articel (id_author, id_article)" +
+                            "VALUES ( ?, ? ) ");
+                    st.setInt(1, author);
+                    st.setInt(2, art_id);
+                    if(st.executeUpdate() != 1) {
+                        return false;
+                    }
             }
             for(String kw : key_words_id) {
                 st = db.prepareStatement("INSERT INTO key_word_article (word, id_article)" +
@@ -134,18 +135,18 @@ public class DbSaver implements ArticleSaver {
     }
 
     @Override
-    public boolean setTitle(String title) {
+    public boolean setTitle(String title) throws SaveException {
         if (title == null) {
-            return false;
+            throw new SaveException("title of article must not be null");
         }
         this.title = title;
         return true;
     }
 
     @Override
-    public boolean addAuthor(Author author) {
+    public boolean addAuthor(Author author) throws SaveException {
         if(author == null) {
-            return false;
+            throw new SaveException("author of article must not be null");
         }
 
         try {
@@ -156,19 +157,17 @@ public class DbSaver implements ArticleSaver {
                 authors_id.add(rs.getInt(1));
                 return true;
             }
-        } catch (Exception exp) {
+        } catch () {
             return false;
+        } catch (SQLException e) {
+            String msg = "error adding author in db: " + e.getMessage();
+            logger.warning(msg);
+            throw new SaveException(msg);
         }
 
-        Object res = insert_to_data_base("organization", "title", author.organiztation);
-        if(res == ERROR_INSERTING_IN_DB) {
-            return false;
-        }
-        res = (String) insert_to_data_base("status", "status", author.status);
-        if (res == ERROR_INSERTING_IN_DB) {
-            return false;
-        }
-        res = (String) insert_to_data_base("academic_rank", "academic_rank", author.academy);
+        insert_to_data_base("organization", "title", author.organiztation);
+        insert_to_data_base("status", "status", author.status);
+        insert_to_data_base("academic_rank", "academic_rank", author.academy);
         if (res == ERROR_INSERTING_IN_DB) {
             return false;
         }
@@ -194,7 +193,7 @@ public class DbSaver implements ArticleSaver {
     }
 
     @Override
-    public boolean setText(String text) {
+    public boolean setText(String text) throws SaveException {
         if(text == null) {
             logger.warning("article don't containing text");
             return false;
@@ -204,7 +203,7 @@ public class DbSaver implements ArticleSaver {
     }
 
     @Override
-    public boolean setAnnotation(String annotation) {
+    public boolean setAnnotation(String annotation) throws SaveException {
         if (annotation == null) {
             return false;
         }
@@ -216,7 +215,7 @@ public class DbSaver implements ArticleSaver {
     }
 
     @Override
-    public boolean addTag(String tag) {
+    public boolean addTag(String tag) throws SaveException {
         String res =  (String) insert_to_data_base("key_word", "word", tag);
         if (res == ERROR_INSERTING_IN_DB) {
             return false;
@@ -226,7 +225,7 @@ public class DbSaver implements ArticleSaver {
     }
 
     @Override
-    public boolean addAutoTag(String tag) {
+    public boolean addAutoTag(String tag) throws SaveException {
         String res = (String)  insert_to_data_base("key_word", "word", tag);
         if (res == ERROR_INSERTING_IN_DB) {
             return false;
@@ -236,7 +235,7 @@ public class DbSaver implements ArticleSaver {
     }
 
     @Override
-    public boolean setCategory(String category) {
+    public boolean setCategory(String category) throws SaveException {
         Object res = insert_to_data_base("category", "title", category);
         if (res == ERROR_INSERTING_IN_DB) {
             return false;
@@ -272,11 +271,11 @@ public class DbSaver implements ArticleSaver {
         return true;
     }
 
-    private Object insert_to_data_base(@NotNull String table,@NotNull String field, String value) {
+    private Object insert_to_data_base(@NotNull String table,@NotNull String field, String value) throws SaveException{
         Object id = ERROR_INSERTING_IN_DB;
 
         if (value == null ) {
-            return ERROR_INSERTING_IN_DB;
+            throw new SaveException("parameter value must not be null");
         }
 
         try {
